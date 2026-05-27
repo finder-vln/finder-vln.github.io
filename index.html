@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finder: Agentic Closed-Loop Object Finding for Embodied Grounding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1d2528;
+      --muted: #637174;
+      --paper: #fbfaf6;
+      --card: #ffffff;
+      --line: #e4e0d8;
+      --teal: #147d76;
+      --teal-soft: #e8f4f2;
+      --amber: #c67a1d;
+      --amber-soft: #fff4df;
+      --blue: #2c65b8;
+      --shadow: 0 22px 70px rgba(31, 41, 55, 0.10);
+      --max-w: 960px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(20,125,118,.13), transparent 30%),
+        radial-gradient(circle at 90% 6%, rgba(198,122,29,.13), transparent 28%),
+        var(--paper);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container {
+      width: min(var(--max-w), calc(100vw - 40px));
+      margin: 0 auto;
+    }
+    section { padding: 44px 0; }
+    section + section { border-top: 1px solid var(--line); }
+    .hero {
+      text-align: center;
+      padding: 62px 0 44px;
+      background: linear-gradient(180deg, rgba(232,244,242,.95) 0%, rgba(251,250,246,0) 92%);
+    }
+    .venue {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 999px;
+      background: var(--teal);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    h1 {
+      max-width: 880px;
+      margin: 0 auto 14px;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(34px, 6vw, 62px);
+      line-height: .98;
+      letter-spacing: -.05em;
+    }
+    .subtitle {
+      max-width: 760px;
+      margin: 0 auto 22px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .authors {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .affiliations {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(31,41,55,.06);
+      transition: transform .16s ease, border-color .16s ease, color .16s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      color: var(--teal);
+      border-color: rgba(20,125,118,.45);
+      text-decoration: none;
+    }
+    .btn svg { width: 16px; height: 16px; }
+    .teaser {
+      max-width: 900px;
+      margin: 0 auto;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .teaser img,
+    .figure-card img,
+    .demo-card img {
+      width: 100%;
+      display: block;
+    }
+    h2 {
+      margin: 0 0 16px;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: -.035em;
+    }
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    p { margin: 0 0 14px; }
+    .abstract-text {
+      color: #374145;
+      font-size: 15px;
+    }
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 22px;
+    }
+    .pillar {
+      padding: 18px;
+      border-radius: 14px;
+      border: 1.5px solid var(--line);
+      background: var(--card);
+    }
+    .pillar strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--teal);
+      font-size: 14px;
+    }
+    .pillar p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0;
+    }
+    .figure-card {
+      margin: 20px 0 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--card);
+      box-shadow: 0 14px 46px rgba(31,41,55,.06);
+    }
+    .caption {
+      padding: 10px 16px;
+      color: var(--muted);
+      background: #f7f6f1;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 20px 0 8px;
+    }
+    .metric {
+      padding: 18px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, #faf8f2);
+      text-align: center;
+    }
+    .metric b {
+      display: block;
+      color: var(--teal);
+      font-size: 27px;
+      line-height: 1;
+      letter-spacing: -.05em;
+    }
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--card);
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    thead th {
+      color: var(--muted);
+      background: #f7f6f1;
+      font-weight: 800;
+    }
+    tbody tr.finder {
+      background: var(--teal-soft);
+      font-weight: 800;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+      margin-top: 20px;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 18px 0 10px;
+    }
+    .demo-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--card);
+      box-shadow: 0 14px 46px rgba(31,41,55,.06);
+    }
+    .demo-copy {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--amber-soft);
+      color: #4a3420;
+      font-size: 14px;
+    }
+    .demo-embed {
+      margin-top: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #0b151b;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .demo-embed iframe {
+      display: block;
+      width: 100%;
+      height: min(820px, 86vh);
+      border: 0;
+      background: #0b151b;
+    }
+    .bibtex-block {
+      position: relative;
+      margin-top: 14px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      overflow-x: auto;
+      background: #1f2933;
+      color: #d7dee5;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #374655;
+      color: #d7dee5;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .copy-btn:hover { background: #4a5b6b; }
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 34px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+    @media (max-width: 760px) {
+      .container { width: min(100vw - 28px, var(--max-w)); }
+      .hero { padding-top: 42px; }
+      .pillars,
+      .metrics,
+      .two-col,
+      .demo-grid { grid-template-columns: 1fr; }
+      table { font-size: 12px; }
+      th, td { padding: 8px 7px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="container">
+      <span class="venue">CoRL 2026 Submission</span>
+      <h1>Finder: Agentic Closed-Loop Object Finding for Embodied Grounding</h1>
+      <p class="subtitle">
+        A reusable closed-loop primitive that turns language-based object grounding into query-conditioned evidence gathering, candidate verification, and explicit accept/continue/abort control.
+      </p>
+      <p class="authors">Anonymous Author(s)</p>
+      <p class="affiliations">Anonymous Institution</p>
+      <div class="btn-row">
+        <a class="btn" href="static/paper/finder_corl2026.pdf" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Paper
+        </a>
+        <a class="btn" href="#interactive-demo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Interactive Demo
+        </a>
+        <a class="btn" href="../../Finder" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>
+          Code
+        </a>
+      </div>
+      <div class="teaser">
+        <img src="static/images/teaser.png" alt="Finder overview">
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>Abstract</h2>
+      <p class="abstract-text">
+        Finding the object referred to by language in a partially observed 3D scene is a core capability for embodied agents. Existing approaches either couple object search with online exploration, which can be costly when relevant observations have already been captured, or query pre-built open-vocabulary maps and scene graphs in a largely one-shot manner.
+      </p>
+      <p class="abstract-text">
+        We present <strong>Finder</strong>, an agentic closed-loop object-finding primitive for embodied grounding. Instead of treating grounding as passive retrieval from a fixed scene representation, Finder maintains a typed loop state that links query-conditioned planning, scoped evidence gathering, candidate verification, and accept/continue/abort control. When evidence is incomplete or ambiguous, the loop can redirect subsequent perception and comparison rather than simply returning the top retrieved object.
+      </p>
+      <p class="abstract-text">
+        On open-vocabulary embodied Object Retrieval in Habitat/HM3D and real-world RGB-D scenes, Finder improves the averaged 1m success rate by 15.75 points over strong baselines. The same primitive also transfers to sequential object grounding and embodied object-centric question answering, improving spatial and temporal localization without changing the inner grounding protocol.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>Closed-Loop Finder</h2>
+      <p class="abstract-text">
+        Finder organizes one grounding episode as a typed loop: plan what to search for, route perception to scoped evidence, detect candidates, verify candidate-centric context, and judge whether to accept, continue, or abort.
+      </p>
+      <div class="figure-card">
+        <img src="static/images/method.png" alt="Finder core execution protocol">
+        <div class="caption">Core Finder execution protocol: a typed closed loop with explicit request, plan, detection, context, selection, decision, hint, and snapshot objects.</div>
+      </div>
+      <div class="pillars">
+        <div class="pillar">
+          <strong>Query-conditioned planning</strong>
+          <p>Finder allocates perception budget to explicit room or scene scopes and expands compact phrase sets for open-vocabulary detection.</p>
+        </div>
+        <div class="pillar">
+          <strong>Candidate-centric evidence</strong>
+          <p>Candidate shortlist construction keeps local visual context and support-object relations available for verification.</p>
+        </div>
+        <div class="pillar">
+          <strong>Loop judgment</strong>
+          <p>A structured judge decides whether current evidence is sufficient or whether the next loop should redirect search.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>Main Results</h2>
+      <p class="abstract-text">
+        Finder is evaluated on open-vocabulary Object Retrieval, sequential object grounding, and embodied object-centric question answering. The same inner grounding primitive is reused across tasks.
+      </p>
+      <div class="metrics">
+        <div class="metric"><b>+15.75</b><span>Avg. S@1 improvement over the strongest retrieval baseline</span></div>
+        <div class="metric"><b>66.24</b><span>Avg. S@1 on Object Retrieval</span></div>
+        <div class="metric"><b>25.91</b><span>SG3D sequential grounding s-acc</span></div>
+        <div class="metric"><b>39.04m</b><span>OC-NaVQA spatial localization error</span></div>
+      </div>
+      <h3>Object Retrieval</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Sim S@1</th>
+            <th>Real S@1</th>
+            <th>Avg S@0.5</th>
+            <th>Avg S@1</th>
+            <th>Avg Err</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>HOV-SG</td><td>50.90</td><td>42.68</td><td>32.96</td><td>50.49</td><td>0.408</td></tr>
+          <tr><td>DualMap</td><td>51.94</td><td>19.51</td><td>36.83</td><td>50.31</td><td>0.348</td></tr>
+          <tr><td>FSR-VLN</td><td>48.90</td><td>24.39</td><td>31.62</td><td>47.67</td><td>0.422</td></tr>
+          <tr class="finder"><td>Finder</td><td>67.29</td><td>46.34</td><td>59.93</td><td>66.24</td><td>0.193</td></tr>
+        </tbody>
+      </table>
+
+      <div class="two-col">
+        <div>
+          <h3>Sequential Grounding</h3>
+          <table>
+            <thead><tr><th>Method</th><th>s-acc</th><th>t-acc</th></tr></thead>
+            <tbody>
+              <tr><td>DAAAM+GPT</td><td>22.16</td><td>11.22</td></tr>
+              <tr class="finder"><td>Finder</td><td>25.91</td><td>12.20</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Object-Centric QA</h3>
+          <table>
+            <thead><tr><th>Method</th><th>QA Acc.</th><th>PosErr</th><th>TempErr</th></tr></thead>
+            <tbody>
+              <tr><td>DAAAM</td><td>0.711</td><td>41.75</td><td>1.792</td></tr>
+              <tr class="finder"><td>Finder</td><td>0.540</td><td>39.04</td><td>1.433</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>Analysis</h2>
+      <p class="abstract-text">
+        Ablations show that blind repetition is not enough: later loops need carried feedback and targeted follow-up. Design-space studies further show that Finder benefits from balanced perception and phrase budgets rather than simply maximizing either axis.
+      </p>
+      <div class="figure-card">
+        <img src="static/images/design_space.png" alt="Finder design-space studies">
+        <div class="caption">Design-space studies for Finder's default perception and phrase budgets.</div>
+      </div>
+      <div class="figure-card">
+        <img src="static/images/qualitative.png" alt="Finder qualitative examples">
+        <div class="caption">Qualitative examples: support-aware disambiguation, judge-guided cross-loop refinement, and failure modes.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2 id="interactive-demo">Dataset and Demo</h2>
+      <p class="abstract-text">
+        The Object Retrieval benchmark contains 1,632 queries over 197 categories across 9 simulated scenes and 4 real-world scenes. The demo below shows Finder routing a living-room query over an HM3D scene and then grounding the best candidate with remote SAM3 evidence.
+      </p>
+      <div class="figure-card">
+        <img src="static/images/dataset_stats.png" alt="Object Retrieval dataset statistics">
+        <div class="caption">Dataset overview: query distribution, scene counts, and simple/hard split.</div>
+      </div>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <img src="static/images/demo_routing_topdown.png" alt="Finder routed top-down map">
+          <div class="caption">Plan step: scoped top-down camera poses selected for a living-room query.</div>
+        </div>
+        <div class="demo-card">
+          <img src="static/images/demo_best_candidate.jpg" alt="Finder accepted candidate">
+          <div class="caption">Judge step: accepted candidate from the SAM3 trace.</div>
+        </div>
+      </div>
+      <div class="demo-copy">
+        <strong>Interactive demo.</strong>
+        The embedded console below replays one Finder episode over an HM3D scene. Use the step buttons to inspect planning, candidate detection, shortlist planning, focused evidence refinement, selection, and final judgment.
+      </div>
+      <div class="demo-embed">
+        <iframe src="static/demo/finder-console-table/index.html" title="Finder interactive demo" loading="lazy"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>Citation</h2>
+      <p class="abstract-text">BibTeX will be updated after de-anonymization.</p>
+      <pre class="bibtex-block" id="bibtex"><button class="copy-btn" onclick="copyBibtex()">Copy</button>@inproceedings&#123;anonymous2026finder,
+  title     = &#123;Finder: Agentic Closed-Loop Object Finding for Embodied Grounding&#125;,
+  author    = &#123;Anonymous Author(s)&#125;,
+  booktitle = &#123;Conference on Robot Learning (CoRL)&#125;,
+  year      = &#123;2026&#125;
+&#125;</pre>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      Project page style adapted from a compact academic-page template. Built for the Finder CoRL submission.
+    </div>
+  </footer>
+
+  <script>
+    function copyBibtex() {
+      const block = document.getElementById("bibtex").innerText.replace("Copy", "").trim();
+      navigator.clipboard.writeText(block);
+    }
+  </script>
+</body>
+</html>

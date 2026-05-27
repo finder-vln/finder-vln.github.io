@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Finder Agentic Grounding Demo</title>
+  <style>
+    :root {
+      --panel: rgba(18, 28, 33, 0.80);
+      --text: #eef0e8;
+      --muted: #94a3a5;
+      --cyan: #25cbc4;
+      --amber: #e7aa45;
+      --line: rgba(255,255,255,0.13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Avenir Next", "DIN Alternate", "Gill Sans", sans-serif;
+      background:
+        radial-gradient(circle at 16% 10%, rgba(37,203,196,0.24), transparent 28%),
+        radial-gradient(circle at 82% 16%, rgba(231,170,69,0.18), transparent 25%),
+        linear-gradient(135deg, #05080b, #0b151b 48%, #11170f);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at 50% 34%, black, transparent 76%);
+    }
+    .shell {
+      width: min(1700px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 28px 0 38px;
+      position: relative;
+      z-index: 1;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 22px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 6vw, 108px);
+      letter-spacing: -0.08em;
+      line-height: 0.86;
+      font-weight: 900;
+    }
+    .jump span {
+      display: inline-block;
+      animation: hop 1.8s ease-in-out infinite;
+    }
+    .jump span:nth-child(2) { animation-delay: .05s; }
+    .jump span:nth-child(3) { animation-delay: .1s; }
+    .jump span:nth-child(4) { animation-delay: .15s; }
+    .jump span:nth-child(5) { animation-delay: .2s; }
+    .jump span:nth-child(6) { animation-delay: .25s; }
+    @keyframes hop {
+      0%, 70%, 100% { transform: translateY(0); color: var(--text); }
+      34% { transform: translateY(-10px); color: var(--cyan); }
+    }
+    .query {
+      justify-self: end;
+      width: min(760px, 100%);
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.025));
+      box-shadow: 0 24px 80px rgba(0,0,0,.32);
+    }
+    .eyebrow {
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: .18em;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .query p {
+      margin: 8px 0 0;
+      font-size: clamp(22px, 2.4vw, 38px);
+      line-height: 1.08;
+      font-family: "Georgia", "Baskerville", serif;
+    }
+    .demo {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      min-height: 690px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 28px 80px rgba(0,0,0,.34);
+      overflow: hidden;
+    }
+    .panel.pad { padding: 20px; }
+    .left {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 12px;
+    }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pulse {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 0 0 rgba(37,203,196,.7);
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse {
+      70% { box-shadow: 0 0 0 14px rgba(37,203,196,0); }
+      100% { box-shadow: 0 0 0 0 rgba(37,203,196,0); }
+    }
+    .stages {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .stage {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      grid-template-rows: auto auto;
+      gap: 6px 9px;
+      align-items: center;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: transform .35s ease, border-color .35s ease, background .35s ease;
+    }
+    .stage em {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: rgba(255,255,255,.07);
+      color: var(--muted);
+      font-style: normal;
+      font-weight: 900;
+      font-size: 12px;
+      grid-row: 1 / span 2;
+    }
+    .stage span { font-weight: 900; font-size: 19px; letter-spacing: -.045em; line-height: 1; }
+    .stage b { color: var(--muted); font-size: 12px; justify-self: start; line-height: 1.1; }
+    .stage.active {
+      transform: translateY(-2px);
+      border-color: rgba(37,203,196,.75);
+      background: linear-gradient(90deg, rgba(37,203,196,.22), rgba(231,170,69,.08));
+    }
+    .stage.active em {
+      background: var(--cyan);
+      color: #061014;
+    }
+    .console {
+      min-height: 120px;
+      border-radius: 20px;
+      border: 1px solid rgba(37,203,196,.28);
+      background: rgba(3, 8, 10, .78);
+      padding: 18px;
+      font-family: "Menlo", "Courier New", monospace;
+      color: #baf6ed;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+    .console-line {
+      display: block;
+      margin: 0 0 7px;
+      color: #baf6ed;
+    }
+    .console-line:first-child {
+      color: #ffe4ae;
+      font-weight: 800;
+    }
+    .console .cursor {
+      display: inline-block;
+      width: 9px;
+      height: 18px;
+      margin-left: 3px;
+      background: var(--amber);
+      vertical-align: -3px;
+      animation: blink .8s steps(2) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .phrases {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .phrases span {
+      border: 1px solid rgba(231,170,69,.35);
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: #ffe4ae;
+      background: rgba(231,170,69,.08);
+      font-size: 13px;
+    }
+    .viewer {
+      position: relative;
+      padding: 22px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+    }
+    .viewer-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .viewer h2 {
+      margin: 0;
+      font-size: clamp(38px, 4.2vw, 72px);
+      letter-spacing: -.065em;
+      line-height: .92;
+    }
+    .viewer-caption {
+      margin: 0;
+      color: #cfdbd6;
+      font-size: 20px;
+      line-height: 1.42;
+      max-width: 980px;
+    }
+    .visual {
+      min-height: 430px;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      overflow: hidden;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+    .visual img {
+      width: 100%;
+      display: block;
+      max-height: 560px;
+      object-fit: contain;
+    }
+    .route-board {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1.12fr .88fr;
+      gap: 12px;
+      padding: 12px;
+      align-items: stretch;
+    }
+    .route-pane {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      min-width: 0;
+    }
+    .route-pane label {
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .route-pane img {
+      height: 100%;
+      max-height: 520px;
+      width: 100%;
+      object-fit: contain;
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .visual.scan::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      animation: scan 3.4s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px var(--cyan));
+    }
+    @keyframes scan {
+      0%, 100% { transform: translateY(18px); opacity: .3; }
+      50% { transform: translateY(86%); opacity: 1; }
+    }
+    .plan-board {
+      width: min(820px, 92%);
+      display: grid;
+      gap: 18px;
+      padding: 34px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(37,203,196,.15), rgba(231,170,69,.08)),
+        rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: inset 0 0 80px rgba(37,203,196,.08);
+    }
+    .plan-query {
+      font-family: "Georgia", "Baskerville", serif;
+      font-size: clamp(30px, 4vw, 58px);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+    }
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .arrow-row::before,
+    .arrow-row::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: rgba(231,170,69,.42);
+    }
+    .plan-phrases {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .plan-phrases span {
+      padding: 12px 15px;
+      border-radius: 999px;
+      background: rgba(37,203,196,.16);
+      border: 1px solid rgba(37,203,196,.34);
+      font-weight: 900;
+      color: #d7fffb;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stat {
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--line);
+      padding: 12px;
+    }
+    .stat label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .stat strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 22px;
+      letter-spacing: -.04em;
+      overflow-wrap: anywhere;
+    }
+    .timeline {
+      min-width: 240px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
+      gap: 10px;
+    }
+    .tick {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      transition: background .3s ease, box-shadow .3s ease;
+    }
+    .tick.active {
+      background: var(--amber);
+      box-shadow: 0 0 26px rgba(231,170,69,.55);
+    }
+    @media (max-width: 1200px) {
+      header, .demo { grid-template-columns: 1fr; }
+      .query { justify-self: stretch; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .route-board { grid-template-columns: 1fr; }
+      .stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">Closed-loop object grounding</div>
+        <h1 class="jump"><span>F</span><span>i</span><span>n</span><span>d</span><span>e</span><span>r</span></h1>
+      </div>
+      <section class="query">
+        <div class="eyebrow">Language query</div>
+        <p>Find the dark brown console table in the living room.</p>
+      </section>
+    </header>
+
+    <section class="demo">
+      <aside class="panel pad left">
+        <div class="panel-title">Finder replay <i class="pulse"></i></div>
+        <div class="stages"><button class="stage" data-stage="0"><em>01</em><span>Plan</span><b>3 phrases</b></button>
+<button class="stage" data-stage="1"><em>02</em><span>Detect</span><b>37 frames</b></button>
+<button class="stage" data-stage="2"><em>03</em><span>Selection Plan</span><b>4 batches</b></button>
+<button class="stage" data-stage="3"><em>04</em><span>Refine Evidence</span><b>25 views</b></button>
+<button class="stage" data-stage="4"><em>05</em><span>Select</span><b>verify</b></button>
+<button class="stage" data-stage="5"><em>06</em><span>Judge</span><b>success</b></button></div>
+        <div class="console">
+          <div id="console-line"></div><span class="cursor"></span>
+        </div>
+        <div class="phrases"><span>dark brown console table</span> <span>console table</span> <span>small dark brown table</span></div>
+      </aside>
+
+      <section class="panel viewer">
+        <div class="viewer-head">
+          <div>
+            <div class="eyebrow">Replay step</div>
+            <h2 id="stage-title"></h2>
+          </div>
+          <div class="timeline"><div class="tick" data-stage="0"></div><div class="tick" data-stage="1"></div><div class="tick" data-stage="2"></div><div class="tick" data-stage="3"></div><div class="tick" data-stage="4"></div><div class="tick" data-stage="5"></div></div>
+        </div>
+        <p class="viewer-caption" id="stage-caption"></p>
+        <div class="visual scan" id="stage-visual"></div>
+        <div class="stats" id="stage-stats"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const TRACE = {"title": "Finder Agentic Grounding Demo", "query": "Find the dark brown console table in the living room.", "target": "find the dark brown console table in the living room", "phrases": ["dark brown console table", "console table", "small dark brown table"], "route_grid": "assets/finder_routed_frames.jpg", "topdown_map": "assets/routing_topdown.png", "sam_grid": "assets/sam3_sweep_frames.jpg", "best_overlay": "assets/best_candidate_overlay.jpg", "contact_sheets": ["assets/coarse_batch_000_contact_sheet.jpg", "assets/refine_batch_000_contact_sheet.jpg", "assets/refine_batch_001_contact_sheet.jpg", "assets/refine_batch_002_contact_sheet.jpg"], "best": {"frame_name": "Dd4bFSTQ8gi_000513.png", "prompt": "small dark brown table", "score": 0.945399, "area": 3940, "bbox": [304, 366, 381, 477]}, "metrics": {"scene_frames": 2253, "route_frames": 18, "searched_frames": 37, "coarse_batches": 1, "refine_batches": 3}, "stages": [{"key": "plan", "name": "Plan", "line": "Parse the query, build target phrases, and scope the search to relevant scene regions.", "metric": "3 phrases", "visual_title": "Plan and scoped routing", "visual_kind": "route_map", "image": "assets/finder_routed_frames.jpg", "map_image": "assets/routing_topdown.png", "caption": "The planner builds a query-conditioned search plan; scoped routing is part of the plan output and allocates frames to the relevant room context.", "stats": [{"label": "Target", "value": "find the dark brown console table in the living room"}, {"label": "Phrase budget", "value": "3 prompts"}, {"label": "Scene frames", "value": 2253}, {"label": "Routed views", "value": 18}, {"label": "Matched rooms", "value": "living room_1, living room_2"}], "logs": ["planner.reason: Loop 0: search for primary target 'find the dark brown console table in the living room' with 0 supporting target(s).", "scope.mode: explicit_room; rooms: living room_1, living room_2", "routing.filters: living room_1: 260 candidate frames -> 7 selected; living room_2: 212 candidate frames -> 11 selected", "sync: top-down labels 1-8 match the selected-frame thumbnails"]}, {"key": "detect", "name": "Detect", "line": "Run open-vocabulary detection and keep a pool of plausible table-like masks.", "metric": "37 frames", "visual_title": "Open-vocabulary candidate detection", "visual_kind": "image", "image": "assets/detect_candidates.jpg", "caption": "This panel summarizes the table-like masks surfaced by detection calls; Finder keeps competing hypotheses instead of committing early.", "stats": [{"label": "Prompts", "value": 3}, {"label": "Detected candidates", "value": 9}, {"label": "Coarse best", "value": "Dd4bFSTQ8gi_000528.png"}, {"label": "Score", "value": 0.932074}], "logs": ["sam3.request: 3 prompts over routed and focused evidence frames", "detect.output: #1 Dd4bFSTQ8gi_000528.png score=0.932; #2 Dd4bFSTQ8gi_000480.png score=0.919; #3 Dd4bFSTQ8gi_000513.png score=0.945; #4 Dd4bFSTQ8gi_000492.png score=0.940", "detect.reason: preserve competing table hypotheses for later comparison"]}, {"key": "selection_plan", "name": "Selection Plan", "line": "Organize detected candidates into a candidate-centered shortlist and choose what evidence to compare next.", "metric": "4 batches", "visual_title": "Candidate-centered shortlist planning", "visual_kind": "image", "image": "assets/selection_plan_topk.jpg", "caption": "The selection planner ranks the initial coarse candidates and chooses where to spend focused evidence next.", "stats": [{"label": "Shortlist size", "value": 2}, {"label": "Focused batches", "value": 3}, {"label": "Center frame", "value": "Dd4bFSTQ8gi_000528.png"}, {"label": "Top hypothesis", "value": "Dd4bFSTQ8gi_000528.png"}], "logs": ["selection_plan.topk: #1 Dd4bFSTQ8gi_000528.png score=0.932; #2 Dd4bFSTQ8gi_000480.png score=0.919", "selection_plan.focus: compare around Dd4bFSTQ8gi_000528.png with 25 nearby frames", "selection_plan.reason: top candidates are visually plausible but need candidate-local comparison"]}, {"key": "refine", "name": "Refine Evidence", "line": "Gather candidate-local evidence around the shortlist before final selection.", "metric": "25 views", "visual_title": "Focused evidence expansion", "visual_kind": "image", "image": "assets/refine_evidence_candidates.jpg", "caption": "This replay step is the focused evidence pass triggered by the selection plan, not a separate outer protocol.", "stats": [{"label": "Center frame", "value": "Dd4bFSTQ8gi_000528.png"}, {"label": "Nearby views", "value": 25}, {"label": "Refined candidates", "value": 9}, {"label": "Best refined", "value": "Dd4bFSTQ8gi_000513.png"}], "logs": ["refine.center: Dd4bFSTQ8gi_000528.png", "refine.evidence: request 25 nearby frames in 3 focused batches", "refine.output: #1 Dd4bFSTQ8gi_000513.png score=0.945; #2 Dd4bFSTQ8gi_000492.png score=0.940; #3 Dd4bFSTQ8gi_000522.png score=0.936; #4 Dd4bFSTQ8gi_000519.png score=0.935"]}, {"key": "select", "name": "Select", "line": "Verify the shortlisted candidate with local visual evidence and candidate context.", "metric": "verify", "visual_title": "Candidate verification", "visual_kind": "image", "image": "assets/select_candidate_comparison.jpg", "caption": "The selector compares the refined shortlist and promotes the candidate with the strongest local evidence.", "stats": [{"label": "Compared candidates", "value": 6}, {"label": "Prompt", "value": "small dark brown table"}, {"label": "Score", "value": 0.945399}, {"label": "Mask area", "value": 3940}], "logs": ["select.compare: #1 Dd4bFSTQ8gi_000513.png score=0.945; #2 Dd4bFSTQ8gi_000492.png score=0.940; #3 Dd4bFSTQ8gi_000522.png score=0.936; #4 Dd4bFSTQ8gi_000519.png score=0.935", "select.promote: Dd4bFSTQ8gi_000513.png from prompt 'small dark brown table'", "select.reason: local comparison makes the best candidate stable enough for judging"]}, {"key": "judge", "name": "Judge", "line": "Accept frame Dd4bFSTQ8gi_000513.png with score 0.945399.", "metric": "success", "visual_title": "Accepted grounded object", "visual_kind": "image", "image": "assets/best_candidate_overlay.jpg", "caption": "The loop terminates once the candidate has sufficient visual evidence and a stable score.", "stats": [{"label": "Best prompt", "value": "small dark brown table"}, {"label": "Score", "value": 0.945399}, {"label": "Mask area", "value": 3940}, {"label": "Frame", "value": "Dd4bFSTQ8gi_000513.png"}], "logs": ["judge.action: success", "judge.reason: strongest verified mask for prompt 'small dark brown table'", "judge.evidence: frame=Dd4bFSTQ8gi_000513.png, score=0.945399, area=3940"]}]};
+    const stages = Array.from(document.querySelectorAll('.stage'));
+    const ticks = Array.from(document.querySelectorAll('.tick'));
+    const line = document.getElementById('console-line');
+    const title = document.getElementById('stage-title');
+    const caption = document.getElementById('stage-caption');
+    const visual = document.getElementById('stage-visual');
+    const stats = document.getElementById('stage-stats');
+    let active = 0;
+    const htmlMap = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => htmlMap[ch]);
+    }
+    function renderStats(stage) {
+      stats.innerHTML = (stage.stats || []).map(item => (
+        '<div class="stat"><label>' + escapeHtml(item.label) + '</label><strong>' +
+        escapeHtml(item.value) + '</strong></div>'
+      )).join('');
+    }
+    function renderLogs(stage) {
+      const rows = ['[' + stage.name.toUpperCase() + '] ' + stage.line].concat(stage.logs || []);
+      line.innerHTML = rows.map(row => '<span class="console-line">' + escapeHtml(row) + '</span>').join('');
+    }
+    function renderVisual(stage) {
+      visual.classList.toggle('scan', stage.key === 'detect' || stage.key === 'selection_plan' || stage.key === 'refine');
+      if (stage.visual_kind === 'plan') {
+        visual.innerHTML =
+          '<div class="plan-board">' +
+            '<div class="eyebrow">Parsed request</div>' +
+            '<div class="plan-query">' + escapeHtml(TRACE.query) + '</div>' +
+            '<div class="arrow-row">target phrases</div>' +
+            '<div class="plan-phrases">' + (TRACE.phrases || []).map(p => '<span>' + escapeHtml(p) + '</span>').join('') + '</div>' +
+          '</div>';
+        return;
+      }
+      if (stage.visual_kind === 'route_map') {
+        visual.classList.remove('scan');
+        visual.innerHTML =
+          '<div class="route-board">' +
+            '<div class="route-pane"><label>Top-down routed camera poses</label><img src="' + escapeHtml(stage.map_image || TRACE.topdown_map || stage.image) + '" alt="Top-down route map"></div>' +
+            '<div class="route-pane"><label>Selected evidence frames</label><img src="' + escapeHtml(stage.image || TRACE.route_grid) + '" alt="Selected frame grid"></div>' +
+          '</div>';
+        return;
+      }
+      visual.innerHTML = '<img src="' + escapeHtml(stage.image || TRACE.sam_grid) + '" alt="' + escapeHtml(stage.visual_title || stage.name) + '">';
+    }
+    function render(i) {
+      active = i % TRACE.stages.length;
+      const stage = TRACE.stages[active];
+      stages.forEach((el, idx) => el.classList.toggle('active', idx === active));
+      ticks.forEach((el, idx) => el.classList.toggle('active', idx === active));
+      title.textContent = stage.visual_title || stage.name;
+      caption.textContent = stage.caption || stage.line;
+      renderLogs(stage);
+      renderVisual(stage);
+      renderStats(stage);
+    }
+    stages.forEach((el, idx) => el.addEventListener('click', () => render(idx)));
+    render(0);
+  </script>
+</body>
+</html>
