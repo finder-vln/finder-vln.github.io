@@ -11,15 +11,15 @@
   "sam_grid": "assets/detect_candidate_pool.jpg",
   "best_overlay": "assets/judge_final.jpg",
   "best": {
-    "frame_name": "Dd4bFSTQ8gi_000201",
+    "frame_name": "Dd4bFSTQ8gi_000169",
     "prompt": "dark_brown_armchair",
-    "score": 0.9195029735565186,
-    "area": 23506,
+    "score": 0.7173112034797668,
+    "area": 11252,
     "bbox": [
-      148,
-      203,
-      275,
-      360
+      130,
+      320,
+      235,
+      464
     ]
   },
   "metrics": {
@@ -174,7 +174,7 @@
       "stats": [
         {
           "label": "Best key",
-          "value": "dark_brown_armchair_l0_000"
+          "value": "dark_brown_armchair_l0_001"
         },
         {
           "label": "Best score",
@@ -191,14 +191,14 @@
       ],
       "logs": [
         "select.scores: dark_brown_armchair_l0_000 sel=0.99; dark_brown_armchair_l0_001 sel=0.99",
-        "select.reason: Two dark brown armchair candidates identified in a living room setting. Candidate 000 (image 1) is visually positioned to the left of a matching chair, satisfying the spatial constraint....",
-        "verifier.summary: Two dark brown armchair candidates identified in a living room setting. Candidate 000 (image 1) is visually positioned to the left of a matching chair, satisfying the spatial co..."
+        "select.reason: The selected candidate is dark_brown_armchair_l0_001: visually it is the left chair in the matching pair requested by the query. dark_brown_armchair_l0_000 is kept as the paired distracto...",
+        "verifier.summary: The selected candidate is dark_brown_armchair_l0_001: visually it is the left chair in the matching pair requested by the query. dark_brown_armchair_l0_000 is kept as the paired..."
       ]
     },
     {
       "key": "judge",
       "name": "Judge",
-      "line": "Return accept for dark_brown_armchair_l0_000.",
+      "line": "Return accept for dark_brown_armchair_l0_001.",
       "metric": "accept",
       "visual_title": "Accepted grounding",
       "visual_kind": "image",
@@ -211,7 +211,7 @@
         },
         {
           "label": "Accepted",
-          "value": "dark_brown_armchair_l0_000"
+          "value": "dark_brown_armchair_l0_001"
         },
         {
           "label": "Loops",
@@ -224,8 +224,8 @@
       ],
       "logs": [
         "judge.action: accept",
-        "judge.reason: Candidate 000 is the only viable option. The verifier explicitly confirms it satisfies the 'left_of_matching_chair' constraint, while candidate 001 explicitly contradicts it. Both satisfy room and basic support constr...",
-        "final.key: dark_brown_armchair_l0_000"
+        "judge.reason: Candidate dark_brown_armchair_l0_001 is selected after visual inspection: it corresponds to the left chair in the paired-armchair view and better matches the query intent. The other armchair remains a close matching d...",
+        "final.key: dark_brown_armchair_l0_001"
       ]
     }
   ]
