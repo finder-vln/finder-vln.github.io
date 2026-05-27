@@ -122,8 +122,7 @@
       box-shadow: var(--shadow);
     }
     .teaser img,
-    .figure-card img,
-    .demo-card img {
+    .figure-card img {
       width: 100%;
       display: block;
     }
@@ -243,19 +242,6 @@
       align-items: start;
       margin-top: 20px;
     }
-    .demo-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin: 18px 0 10px;
-    }
-    .demo-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      overflow: hidden;
-      background: var(--card);
-      box-shadow: 0 14px 46px rgba(31,41,55,.06);
-    }
     .demo-copy {
       padding: 16px;
       border-radius: 14px;
@@ -264,8 +250,48 @@
       color: #4a3420;
       font-size: 14px;
     }
+    .demo-selector {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .demo-tab {
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--ink);
+      padding: 11px 12px;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+    .demo-tab:hover {
+      transform: translateY(-1px);
+      border-color: rgba(20,125,118,.45);
+    }
+    .demo-tab.active {
+      border-color: rgba(20,125,118,.68);
+      background: var(--teal-soft);
+    }
+    .demo-tab strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .demo-tab span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.25;
+    }
     .demo-embed {
       margin-top: 18px;
+      width: min(1540px, calc(100vw - 40px));
+      margin-left: 50%;
+      transform: translateX(-50%);
       border-radius: 18px;
       border: 1px solid var(--line);
       background: #0b151b;
@@ -275,7 +301,7 @@
     .demo-embed iframe {
       display: block;
       width: 100%;
-      height: min(820px, 86vh);
+      height: min(780px, 90vh);
       border: 0;
       background: #0b151b;
     }
@@ -318,7 +344,7 @@
       .pillars,
       .metrics,
       .two-col,
-      .demo-grid { grid-template-columns: 1fr; }
+      .demo-selector { grid-template-columns: 1fr; }
       table { font-size: 12px; }
       th, td { padding: 8px 7px; }
     }
@@ -388,6 +414,44 @@
           <strong>Loop judgment</strong>
           <p>A structured judge decides whether current evidence is sufficient or whether the next loop should redirect search.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2 id="interactive-demo">Interactive Demo</h2>
+      <p class="abstract-text">
+        These full-loop replays show Finder using SAM3 only as the mask proposal backend, while planning, evidence construction, candidate comparison, and final judgment follow the Finder protocol.
+      </p>
+      <div class="demo-copy">
+        <strong>Choose a case.</strong>
+        The embedded replay exposes the internal loop state: query planning, candidate detection, evidence construction, selection planning, VLM comparison, and final judgment.
+      </div>
+      <div class="demo-selector" aria-label="Finder demo cases">
+        <button class="demo-tab active" type="button" data-demo="static/demo/full-hm3d-armchair-hard/index.html">
+          <strong>HM3D Armchair</strong>
+          <span>left-of matching chair</span>
+        </button>
+        <button class="demo-tab" type="button" data-demo="static/demo/full-icra-ic4f-desk-between-chairs/index.html">
+          <strong>Real Desk</strong>
+          <span>between two chairs</span>
+        </button>
+        <button class="demo-tab" type="button" data-demo="static/demo/full-icra-ic3f-blue-chair/index.html">
+          <strong>Real Blue Chair</strong>
+          <span>color/object query</span>
+        </button>
+        <button class="demo-tab" type="button" data-demo="static/demo/full-icra-ic7f-white-table/index.html">
+          <strong>Real White Table</strong>
+          <span>dark legs, right side</span>
+        </button>
+        <button class="demo-tab" type="button" data-demo="static/demo/full-icra-sh3f-black-chair-robot-arm/index.html">
+          <strong>Real Black Chair</strong>
+          <span>near robot arm</span>
+        </button>
+      </div>
+      <div class="demo-embed">
+        <iframe id="finder-demo-frame" src="static/demo/full-hm3d-armchair-hard/index.html" title="Finder interactive demo" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -468,30 +532,13 @@
 
   <section>
     <div class="container">
-      <h2 id="interactive-demo">Dataset and Demo</h2>
+      <h2>Dataset</h2>
       <p class="abstract-text">
-        The Object Retrieval benchmark contains 1,632 queries over 197 categories across 9 simulated scenes and 4 real-world scenes. The demo below shows Finder routing a living-room query over an HM3D scene and then grounding the best candidate with remote SAM3 evidence.
+        The Object Retrieval benchmark contains 1,632 queries over 197 categories across 9 simulated scenes and 4 real-world scenes.
       </p>
       <div class="figure-card">
         <img src="static/images/dataset_stats.png" alt="Object Retrieval dataset statistics">
         <div class="caption">Dataset overview: query distribution, scene counts, and simple/hard split.</div>
-      </div>
-      <div class="demo-grid">
-        <div class="demo-card">
-          <img src="static/images/demo_routing_topdown.png" alt="Finder routed top-down map">
-          <div class="caption">Plan step: scoped top-down camera poses selected for a living-room query.</div>
-        </div>
-        <div class="demo-card">
-          <img src="static/images/demo_best_candidate.jpg" alt="Finder accepted candidate">
-          <div class="caption">Judge step: accepted candidate from the SAM3 trace.</div>
-        </div>
-      </div>
-      <div class="demo-copy">
-        <strong>Interactive demo.</strong>
-        The embedded console below replays one Finder episode over an HM3D scene. Use the step buttons to inspect planning, candidate detection, shortlist planning, focused evidence refinement, selection, and final judgment.
-      </div>
-      <div class="demo-embed">
-        <iframe src="static/demo/finder-console-table/index.html" title="Finder interactive demo" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -520,6 +567,14 @@
       const block = document.getElementById("bibtex").innerText.replace("Copy", "").trim();
       navigator.clipboard.writeText(block);
     }
+    const demoFrame = document.getElementById("finder-demo-frame");
+    document.querySelectorAll(".demo-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".demo-tab").forEach((item) => item.classList.remove("active"));
+        tab.classList.add("active");
+        demoFrame.src = tab.dataset.demo;
+      });
+    });
   </script>
 </body>
 </html>

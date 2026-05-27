@@ -1,0 +1,232 @@
+{
+  "title": "Finder Full-Loop Grounding Demo",
+  "query": "Find me a blue chair",
+  "target": "blue_chair",
+  "phrases": [
+    "blue_chair",
+    "blue chair"
+  ],
+  "route_grid": "assets/finder_routed_frames.jpg",
+  "topdown_map": "",
+  "sam_grid": "assets/detect_candidate_pool.jpg",
+  "best_overlay": "assets/judge_final.jpg",
+  "best": {
+    "frame_name": "1756719267838.6064",
+    "prompt": "blue_chair",
+    "score": 0.957064151763916,
+    "area": 1473,
+    "bbox": [
+      101,
+      258,
+      200,
+      376
+    ]
+  },
+  "metrics": {
+    "scene_frames": 15,
+    "route_frames": 15,
+    "searched_frames": 15,
+    "candidates": 7,
+    "status": "accepted"
+  },
+  "stages": [
+    {
+      "key": "plan",
+      "name": "Plan",
+      "line": "Parse the request into a primary target, support context, and scoped frame budget.",
+      "metric": "2 phrases",
+      "visual_title": "Query-conditioned search plan",
+      "visual_kind": "image",
+      "image": "assets/finder_routed_frames.jpg",
+      "caption": "Finder first turns the language request into target phrases and routes a compact evidence set for the loop.",
+      "stats": [
+        {
+          "label": "Target",
+          "value": "blue_chair"
+        },
+        {
+          "label": "Support",
+          "value": "none"
+        },
+        {
+          "label": "Routed views",
+          "value": 15
+        },
+        {
+          "label": "Plan time",
+          "value": "18.2s"
+        }
+      ],
+      "logs": [
+        "planner.reason: Loop 0: LLM planner selected 'blue_chair' as the primary target with 0 supporting target(s).",
+        "evidence.goals: Locate a blue chair in the scene; Confirm the chair is blue",
+        "routing.scope: global_fallback"
+      ]
+    },
+    {
+      "key": "detect",
+      "name": "Detect",
+      "line": "Run SAM3 only as the open-vocabulary mask proposal backend, then build 3D candidates.",
+      "metric": "7 candidates",
+      "visual_title": "Detected candidate pool",
+      "visual_kind": "image",
+      "image": "assets/detect_candidate_pool.jpg",
+      "caption": "The detector surfaces multiple plausible object masks; downstream Finder stages keep the ambiguity instead of taking the top SAM3 mask directly.",
+      "stats": [
+        {
+          "label": "Candidates",
+          "value": 7
+        },
+        {
+          "label": "Instances",
+          "value": 14
+        },
+        {
+          "label": "Frames",
+          "value": 15
+        },
+        {
+          "label": "Detect time",
+          "value": "6.8s"
+        }
+      ],
+      "logs": [
+        "detect.backend: remote SAM3 masks, Finder 3D clustering and dedup",
+        "detect.top: blue_chair_l0_006 det=0.97; blue_chair_l0_005 det=0.96; blue_chair_l0_004 det=0.95; blue_chair_l0_001 det=0.94",
+        "detect.primary: blue_chair"
+      ]
+    },
+    {
+      "key": "evidence",
+      "name": "Evidence",
+      "line": "Attach candidate-local geometry and support-object evidence before planning selection.",
+      "metric": "context",
+      "visual_title": "Candidate-local evidence",
+      "visual_kind": "image",
+      "image": "assets/evidence_candidate_context.jpg",
+      "caption": "Candidate evidence makes support relations explicit, so the later selector compares candidates in context rather than by mask confidence alone.",
+      "stats": [
+        {
+          "label": "Support policy",
+          "value": "none"
+        },
+        {
+          "label": "Evidence cards",
+          "value": 7
+        },
+        {
+          "label": "Feature time",
+          "value": "0.00s"
+        },
+        {
+          "label": "Context time",
+          "value": "0.00s"
+        }
+      ],
+      "logs": [
+        "support.targets: none",
+        "support.mode: none",
+        "evidence.reason: geometry and support cues are available to selection planner"
+      ]
+    },
+    {
+      "key": "selection_plan",
+      "name": "Selection Plan",
+      "line": "Shortlist candidates and choose comparison axes for verification.",
+      "metric": "3 shortlist",
+      "visual_title": "Shortlist and comparison plan",
+      "visual_kind": "image",
+      "image": "assets/selection_plan_shortlist.jpg",
+      "caption": "The selection planner narrows the candidate pool and specifies what relation or attribute evidence must be checked.",
+      "stats": [
+        {
+          "label": "Shortlist",
+          "value": 3
+        },
+        {
+          "label": "Mode",
+          "value": "direct_all"
+        },
+        {
+          "label": "Axes",
+          "value": "color_confirmation, chair_geometry"
+        },
+        {
+          "label": "Plan time",
+          "value": "17.5s"
+        }
+      ],
+      "logs": [
+        "shortlist.keys: blue_chair_l0_005; blue_chair_l0_004; blue_chair_l0_000",
+        "selection.reason: No relational context available - this is a simple color/object query. Selected candidates based on geometry features that best match chair characteristics: blue_chair_l0_005 ha...",
+        "actions: verify blue color on shortlisted candidates; compare chair-like geometry features; assess point cloud density and completeness"
+      ]
+    },
+    {
+      "key": "select",
+      "name": "Select",
+      "line": "Compare shortlisted candidates with VLM verification and select the strongest candidate.",
+      "metric": "verify",
+      "visual_title": "Candidate comparison",
+      "visual_kind": "image",
+      "image": "assets/select_comparison.jpg",
+      "caption": "The selector compares the shortlisted candidates and records rationales for why the accepted candidate beats alternatives.",
+      "stats": [
+        {
+          "label": "Best key",
+          "value": "blue_chair_l0_005"
+        },
+        {
+          "label": "Best score",
+          "value": 0.7200000000000002
+        },
+        {
+          "label": "Rounds",
+          "value": 1
+        },
+        {
+          "label": "Select time",
+          "value": "17.1s"
+        }
+      ],
+      "logs": [
+        "select.scores: blue_chair_l0_005 sel=0.72; blue_chair_l0_004 sel=0.72; blue_chair_l0_000 sel=0.72",
+        "select.reason: Visual verification confirms the presence of a blue chair matching the query. The object is clearly visible in all provided images, exhibiting strong color and geometry matches. It is pos...",
+        "verifier.summary: Visual verification confirms the presence of a blue chair matching the query. The object is clearly visible in all provided images, exhibiting strong color and geometry matches...."
+      ]
+    },
+    {
+      "key": "judge",
+      "name": "Judge",
+      "line": "Return accept for blue_chair_l0_005.",
+      "metric": "accept",
+      "visual_title": "Accepted grounding",
+      "visual_kind": "image",
+      "image": "assets/judge_final.jpg",
+      "caption": "The loop judge accepts the selected candidate once the evidence is sufficient; otherwise the same protocol can continue with feedback.",
+      "stats": [
+        {
+          "label": "Action",
+          "value": "accept"
+        },
+        {
+          "label": "Accepted",
+          "value": "blue_chair_l0_005"
+        },
+        {
+          "label": "Loops",
+          "value": 1
+        },
+        {
+          "label": "Judge time",
+          "value": "16.7s"
+        }
+      ],
+      "logs": [
+        "judge.action: accept",
+        "judge.reason: The query is a simple color/object query for 'blue chair' with no relational or room constraints. The best candidate 'blue_chair_l0_005' has strong visual verification confirming it is a complete, blue chair with stro...",
+        "final.key: blue_chair_l0_005"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+{
+  "title": "Finder Full-Loop Grounding Demo",
+  "query": "Can you find me a black chair near a white robot arm",
+  "target": "black_chair",
+  "phrases": [
+    "black_chair",
+    "black chair"
+  ],
+  "route_grid": "assets/finder_routed_frames.jpg",
+  "topdown_map": "",
+  "sam_grid": "assets/detect_candidate_pool.jpg",
+  "best_overlay": "assets/judge_final.jpg",
+  "best": {
+    "frame_name": "1752837415469.6797",
+    "prompt": "black_chair",
+    "score": 0.9706471562385559,
+    "area": 248,
+    "bbox": [
+      350,
+      223,
+      510,
+      476
+    ]
+  },
+  "metrics": {
+    "scene_frames": 15,
+    "route_frames": 15,
+    "searched_frames": 15,
+    "candidates": 3,
+    "status": "accepted"
+  },
+  "stages": [
+    {
+      "key": "plan",
+      "name": "Plan",
+      "line": "Parse the request into a primary target, support context, and scoped frame budget.",
+      "metric": "2 phrases",
+      "visual_title": "Query-conditioned search plan",
+      "visual_kind": "image",
+      "image": "assets/finder_routed_frames.jpg",
+      "caption": "Finder first turns the language request into target phrases and routes a compact evidence set for the loop.",
+      "stats": [
+        {
+          "label": "Target",
+          "value": "black_chair"
+        },
+        {
+          "label": "Support",
+          "value": "white_robot_arm"
+        },
+        {
+          "label": "Routed views",
+          "value": 15
+        },
+        {
+          "label": "Plan time",
+          "value": "20.1s"
+        }
+      ],
+      "logs": [
+        "planner.reason: Loop 0: LLM planner selected 'black_chair' as the primary target with 1 supporting target(s).",
+        "evidence.goals: locate black chair; verify spatial proximity to white robot arm",
+        "routing.scope: global_fallback"
+      ]
+    },
+    {
+      "key": "detect",
+      "name": "Detect",
+      "line": "Run SAM3 only as the open-vocabulary mask proposal backend, then build 3D candidates.",
+      "metric": "3 candidates",
+      "visual_title": "Detected candidate pool",
+      "visual_kind": "image",
+      "image": "assets/detect_candidate_pool.jpg",
+      "caption": "The detector surfaces multiple plausible object masks; downstream Finder stages keep the ambiguity instead of taking the top SAM3 mask directly.",
+      "stats": [
+        {
+          "label": "Candidates",
+          "value": 3
+        },
+        {
+          "label": "Instances",
+          "value": 6
+        },
+        {
+          "label": "Frames",
+          "value": 15
+        },
+        {
+          "label": "Detect time",
+          "value": "7.2s"
+        }
+      ],
+      "logs": [
+        "detect.backend: remote SAM3 masks, Finder 3D clustering and dedup",
+        "detect.top: black_chair_l0_000 det=0.97; black_chair_l0_002 det=0.89; black_chair_l0_001 det=0.58",
+        "detect.primary: black_chair"
+      ]
+    },
+    {
+      "key": "evidence",
+      "name": "Evidence",
+      "line": "Attach candidate-local geometry and support-object evidence before planning selection.",
+      "metric": "context",
+      "visual_title": "Candidate-local evidence",
+      "visual_kind": "image",
+      "image": "assets/evidence_candidate_context.jpg",
+      "caption": "Candidate evidence makes support relations explicit, so the later selector compares candidates in context rather than by mask confidence alone.",
+      "stats": [
+        {
+          "label": "Support policy",
+          "value": "local_after_primary"
+        },
+        {
+          "label": "Evidence cards",
+          "value": 3
+        },
+        {
+          "label": "Feature time",
+          "value": "0.00s"
+        },
+        {
+          "label": "Context time",
+          "value": "0.00s"
+        }
+      ],
+      "logs": [
+        "support.targets: white_robot_arm",
+        "support.mode: local_after_primary",
+        "evidence.reason: geometry and support cues are available to selection planner"
+      ]
+    },
+    {
+      "key": "selection_plan",
+      "name": "Selection Plan",
+      "line": "Shortlist candidates and choose comparison axes for verification.",
+      "metric": "1 shortlist",
+      "visual_title": "Shortlist and comparison plan",
+      "visual_kind": "image",
+      "image": "assets/selection_plan_shortlist.jpg",
+      "caption": "The selection planner narrows the candidate pool and specifies what relation or attribute evidence must be checked.",
+      "stats": [
+        {
+          "label": "Shortlist",
+          "value": 1
+        },
+        {
+          "label": "Mode",
+          "value": "direct_all"
+        },
+        {
+          "label": "Axes",
+          "value": "near_white_robot_arm"
+        },
+        {
+          "label": "Plan time",
+          "value": "13.0s"
+        }
+      ],
+      "logs": [
+        "shortlist.keys: black_chair_l0_000",
+        "selection.reason: Candidate black_chair_l0_000 has clear relation evidence: it is the only candidate with a detected white robot arm nearby (surface gap 0.19m, rank 1). The other two candidates h...",
+        "actions: verify spatial proximity to white robot arm on shortlisted candidate"
+      ]
+    },
+    {
+      "key": "select",
+      "name": "Select",
+      "line": "Compare shortlisted candidates with VLM verification and select the strongest candidate.",
+      "metric": "verify",
+      "visual_title": "Candidate comparison",
+      "visual_kind": "image",
+      "image": "assets/select_comparison.jpg",
+      "caption": "The selector compares the shortlisted candidates and records rationales for why the accepted candidate beats alternatives.",
+      "stats": [
+        {
+          "label": "Best key",
+          "value": "black_chair_l0_000"
+        },
+        {
+          "label": "Best score",
+          "value": 0.7100000000000002
+        },
+        {
+          "label": "Rounds",
+          "value": 1
+        },
+        {
+          "label": "Select time",
+          "value": "8.7s"
+        }
+      ],
+      "logs": [
+        "select.scores: black_chair_l0_000 sel=0.71",
+        "select.reason: The candidate 'black_chair_l0_000' is visually confirmed as a black office chair positioned directly adjacent to a white robot arm. The image shows the chair tucked under or next to a whi...",
+        "verifier.summary: The candidate 'black_chair_l0_000' is visually confirmed as a black office chair positioned directly adjacent to a white robot arm. The image shows the chair tucked under or nex..."
+      ]
+    },
+    {
+      "key": "judge",
+      "name": "Judge",
+      "line": "Return accept for black_chair_l0_000.",
+      "metric": "accept",
+      "visual_title": "Accepted grounding",
+      "visual_kind": "image",
+      "image": "assets/judge_final.jpg",
+      "caption": "The loop judge accepts the selected candidate once the evidence is sufficient; otherwise the same protocol can continue with feedback.",
+      "stats": [
+        {
+          "label": "Action",
+          "value": "accept"
+        },
+        {
+          "label": "Accepted",
+          "value": "black_chair_l0_000"
+        },
+        {
+          "label": "Loops",
+          "value": 1
+        },
+        {
+          "label": "Judge time",
+          "value": "15.4s"
+        }
+      ],
+      "logs": [
+        "judge.action: accept",
+        "judge.reason: Candidate black_chair_l0_000 is strongly supported: visually confirmed as black office chair with strong color/object match, and spatial relation to white robot arm is validated with surface gap 0.19m (rank 1). No exp...",
+        "final.key: black_chair_l0_000"
+      ]
+    }
+  ]
+}

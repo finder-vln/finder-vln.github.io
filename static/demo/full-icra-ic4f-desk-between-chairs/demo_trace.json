@@ -1,0 +1,232 @@
+{
+  "title": "Finder Full-Loop Grounding Demo",
+  "query": "take me to the desk between two chairs",
+  "target": "desk",
+  "phrases": [
+    "desk",
+    "writing desk"
+  ],
+  "route_grid": "assets/finder_routed_frames.jpg",
+  "topdown_map": "",
+  "sam_grid": "assets/detect_candidate_pool.jpg",
+  "best_overlay": "assets/judge_final.jpg",
+  "best": {
+    "frame_name": "01805",
+    "prompt": "desk",
+    "score": 0.6750438809394836,
+    "area": 128,
+    "bbox": [
+      198,
+      191,
+      368,
+      216
+    ]
+  },
+  "metrics": {
+    "scene_frames": 11,
+    "route_frames": 11,
+    "searched_frames": 11,
+    "candidates": 5,
+    "status": "accepted"
+  },
+  "stages": [
+    {
+      "key": "plan",
+      "name": "Plan",
+      "line": "Parse the request into a primary target, support context, and scoped frame budget.",
+      "metric": "2 phrases",
+      "visual_title": "Query-conditioned search plan",
+      "visual_kind": "image",
+      "image": "assets/finder_routed_frames.jpg",
+      "caption": "Finder first turns the language request into target phrases and routes a compact evidence set for the loop.",
+      "stats": [
+        {
+          "label": "Target",
+          "value": "desk"
+        },
+        {
+          "label": "Support",
+          "value": "chair_pair"
+        },
+        {
+          "label": "Routed views",
+          "value": 11
+        },
+        {
+          "label": "Plan time",
+          "value": "28.0s"
+        }
+      ],
+      "logs": [
+        "planner.reason: Loop 0: LLM planner selected 'desk' as the primary target with 1 supporting target(s).",
+        "evidence.goals: find all desk candidates in the scene; for each desk candidate, detect nearby chairs to verify the 'between two chairs' relation; return the desk that best satisfies the spatial constraint",
+        "routing.scope: global_fallback"
+      ]
+    },
+    {
+      "key": "detect",
+      "name": "Detect",
+      "line": "Run SAM3 only as the open-vocabulary mask proposal backend, then build 3D candidates.",
+      "metric": "5 candidates",
+      "visual_title": "Detected candidate pool",
+      "visual_kind": "image",
+      "image": "assets/detect_candidate_pool.jpg",
+      "caption": "The detector surfaces multiple plausible object masks; downstream Finder stages keep the ambiguity instead of taking the top SAM3 mask directly.",
+      "stats": [
+        {
+          "label": "Candidates",
+          "value": 5
+        },
+        {
+          "label": "Instances",
+          "value": 8
+        },
+        {
+          "label": "Frames",
+          "value": 11
+        },
+        {
+          "label": "Detect time",
+          "value": "6.7s"
+        }
+      ],
+      "logs": [
+        "detect.backend: remote SAM3 masks, Finder 3D clustering and dedup",
+        "detect.top: desk_l0_000 det=0.93; desk_l0_003 det=0.87; desk_l0_001 det=0.86; desk_l0_002 det=0.68",
+        "detect.primary: desk"
+      ]
+    },
+    {
+      "key": "evidence",
+      "name": "Evidence",
+      "line": "Attach candidate-local geometry and support-object evidence before planning selection.",
+      "metric": "context",
+      "visual_title": "Candidate-local evidence",
+      "visual_kind": "image",
+      "image": "assets/evidence_candidate_context.jpg",
+      "caption": "Candidate evidence makes support relations explicit, so the later selector compares candidates in context rather than by mask confidence alone.",
+      "stats": [
+        {
+          "label": "Support policy",
+          "value": "local_after_primary"
+        },
+        {
+          "label": "Evidence cards",
+          "value": 5
+        },
+        {
+          "label": "Feature time",
+          "value": "0.00s"
+        },
+        {
+          "label": "Context time",
+          "value": "0.00s"
+        }
+      ],
+      "logs": [
+        "support.targets: chair_pair",
+        "support.mode: local_after_primary",
+        "evidence.reason: geometry and support cues are available to selection planner"
+      ]
+    },
+    {
+      "key": "selection_plan",
+      "name": "Selection Plan",
+      "line": "Shortlist candidates and choose comparison axes for verification.",
+      "metric": "3 shortlist",
+      "visual_title": "Shortlist and comparison plan",
+      "visual_kind": "image",
+      "image": "assets/selection_plan_shortlist.jpg",
+      "caption": "The selection planner narrows the candidate pool and specifies what relation or attribute evidence must be checked.",
+      "stats": [
+        {
+          "label": "Shortlist",
+          "value": 3
+        },
+        {
+          "label": "Mode",
+          "value": "direct_all"
+        },
+        {
+          "label": "Axes",
+          "value": "chair_proximity, between_two_chairs"
+        },
+        {
+          "label": "Plan time",
+          "value": "26.2s"
+        }
+      ],
+      "logs": [
+        "shortlist.keys: desk_l0_001; desk_l0_002; desk_l0_004",
+        "selection.reason: All desk candidates have local chair-pair evidence executed. desk_l0_001 shows strongest relation evidence: surface_gap_m=0.0 (rank 1), 3 support objects detected, and very_near...",
+        "actions: verify spatial relation 'between two chairs' on shortlisted candidates; compare chair proximity evidence (surface_gap_m, num_support_objects); request additional views if needed for disambiguation"
+      ]
+    },
+    {
+      "key": "select",
+      "name": "Select",
+      "line": "Compare shortlisted candidates with VLM verification and select the strongest candidate.",
+      "metric": "verify",
+      "visual_title": "Candidate comparison",
+      "visual_kind": "image",
+      "image": "assets/select_comparison.jpg",
+      "caption": "The selector compares the shortlisted candidates and records rationales for why the accepted candidate beats alternatives.",
+      "stats": [
+        {
+          "label": "Best key",
+          "value": "desk_l0_002"
+        },
+        {
+          "label": "Best score",
+          "value": 0.7086000000000001
+        },
+        {
+          "label": "Rounds",
+          "value": 1
+        },
+        {
+          "label": "Select time",
+          "value": "21.1s"
+        }
+      ],
+      "logs": [
+        "select.scores: desk_l0_002 sel=0.71; desk_l0_001 sel=0.53; desk_l0_004 sel=0.47",
+        "select.reason: Three desk candidates were evaluated based on visual evidence and spatial relations to chairs. Desk_l0_002 (Image 2) is the strongest match, appearing as a dark desk clearly situated betw...",
+        "verifier.summary: Three desk candidates were evaluated based on visual evidence and spatial relations to chairs. Desk_l0_002 (Image 2) is the strongest match, appearing as a dark desk clearly sit..."
+      ]
+    },
+    {
+      "key": "judge",
+      "name": "Judge",
+      "line": "Return accept for desk_l0_002.",
+      "metric": "accept",
+      "visual_title": "Accepted grounding",
+      "visual_kind": "image",
+      "image": "assets/judge_final.jpg",
+      "caption": "The loop judge accepts the selected candidate once the evidence is sufficient; otherwise the same protocol can continue with feedback.",
+      "stats": [
+        {
+          "label": "Action",
+          "value": "accept"
+        },
+        {
+          "label": "Accepted",
+          "value": "desk_l0_002"
+        },
+        {
+          "label": "Loops",
+          "value": 1
+        },
+        {
+          "label": "Judge time",
+          "value": "20.5s"
+        }
+      ],
+      "logs": [
+        "judge.action: accept",
+        "judge.reason: desk_l0_002 is the strongest candidate: verifier shows 'plausible' with strong type and color match, explicitly notes 'flanked by two chairs', and has zero surface gap with 3 support objects. desk_l0_001 fails the 'be...",
+        "final.key: desk_l0_002"
+      ]
+    }
+  ]
+}

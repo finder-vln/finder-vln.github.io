@@ -1,0 +1,232 @@
+{
+  "title": "Finder Full-Loop Grounding Demo",
+  "query": "white table with dark legs on the right side",
+  "target": "white table",
+  "phrases": [
+    "white table",
+    "table with dark legs"
+  ],
+  "route_grid": "assets/finder_routed_frames.jpg",
+  "topdown_map": "",
+  "sam_grid": "assets/detect_candidate_pool.jpg",
+  "best_overlay": "assets/judge_final.jpg",
+  "best": {
+    "frame_name": "1757050935694.5803",
+    "prompt": "white table",
+    "score": 0.8793851137161255,
+    "area": 355,
+    "bbox": [
+      367,
+      298,
+      605,
+      479
+    ]
+  },
+  "metrics": {
+    "scene_frames": 26,
+    "route_frames": 26,
+    "searched_frames": 26,
+    "candidates": 16,
+    "status": "accepted"
+  },
+  "stages": [
+    {
+      "key": "plan",
+      "name": "Plan",
+      "line": "Parse the request into a primary target, support context, and scoped frame budget.",
+      "metric": "2 phrases",
+      "visual_title": "Query-conditioned search plan",
+      "visual_kind": "image",
+      "image": "assets/finder_routed_frames.jpg",
+      "caption": "Finder first turns the language request into target phrases and routes a compact evidence set for the loop.",
+      "stats": [
+        {
+          "label": "Target",
+          "value": "white table"
+        },
+        {
+          "label": "Support",
+          "value": "none"
+        },
+        {
+          "label": "Routed views",
+          "value": 26
+        },
+        {
+          "label": "Plan time",
+          "value": "18.9s"
+        }
+      ],
+      "logs": [
+        "planner.reason: Loop 0: LLM planner selected 'white table' as the primary target with 0 supporting target(s).",
+        "evidence.goals: Find a white table object; Verify the table has dark-colored legs; Confirm the table is positioned on the right side of the viewed scene",
+        "routing.scope: global_fallback"
+      ]
+    },
+    {
+      "key": "detect",
+      "name": "Detect",
+      "line": "Run SAM3 only as the open-vocabulary mask proposal backend, then build 3D candidates.",
+      "metric": "16 candidates",
+      "visual_title": "Detected candidate pool",
+      "visual_kind": "image",
+      "image": "assets/detect_candidate_pool.jpg",
+      "caption": "The detector surfaces multiple plausible object masks; downstream Finder stages keep the ambiguity instead of taking the top SAM3 mask directly.",
+      "stats": [
+        {
+          "label": "Candidates",
+          "value": 16
+        },
+        {
+          "label": "Instances",
+          "value": 16
+        },
+        {
+          "label": "Frames",
+          "value": 26
+        },
+        {
+          "label": "Detect time",
+          "value": "11.7s"
+        }
+      ],
+      "logs": [
+        "detect.backend: remote SAM3 masks, Finder 3D clustering and dedup",
+        "detect.top: white_table_l0_000 det=0.92; white_table_l0_014 det=0.92; white_table_l0_004 det=0.92; white_table_l0_005 det=0.91",
+        "detect.primary: white table"
+      ]
+    },
+    {
+      "key": "evidence",
+      "name": "Evidence",
+      "line": "Attach candidate-local geometry and support-object evidence before planning selection.",
+      "metric": "context",
+      "visual_title": "Candidate-local evidence",
+      "visual_kind": "image",
+      "image": "assets/evidence_candidate_context.jpg",
+      "caption": "Candidate evidence makes support relations explicit, so the later selector compares candidates in context rather than by mask confidence alone.",
+      "stats": [
+        {
+          "label": "Support policy",
+          "value": "none"
+        },
+        {
+          "label": "Evidence cards",
+          "value": 16
+        },
+        {
+          "label": "Feature time",
+          "value": "0.00s"
+        },
+        {
+          "label": "Context time",
+          "value": "0.00s"
+        }
+      ],
+      "logs": [
+        "support.targets: none",
+        "support.mode: none",
+        "evidence.reason: geometry and support cues are available to selection planner"
+      ]
+    },
+    {
+      "key": "selection_plan",
+      "name": "Selection Plan",
+      "line": "Shortlist candidates and choose comparison axes for verification.",
+      "metric": "3 shortlist",
+      "visual_title": "Shortlist and comparison plan",
+      "visual_kind": "image",
+      "image": "assets/selection_plan_shortlist.jpg",
+      "caption": "The selection planner narrows the candidate pool and specifies what relation or attribute evidence must be checked.",
+      "stats": [
+        {
+          "label": "Shortlist",
+          "value": 3
+        },
+        {
+          "label": "Mode",
+          "value": "direct_all"
+        },
+        {
+          "label": "Axes",
+          "value": "spatial_right_side, table_shape"
+        },
+        {
+          "label": "Plan time",
+          "value": "17.9s"
+        }
+      ],
+      "logs": [
+        "shortlist.keys: white_table_l0_000; white_table_l0_003; white_table_l0_004",
+        "selection.reason: Query specifies 'white table with dark legs on the right side'. No relation evidence is available, so spatial positioning from 'right side' hint is primary filter. Analyzing cen...",
+        "actions: filter candidates by spatial hint 'right side'; compare candidate positions for right-side placement; verify table appearance (white, dark legs) on shortlisted candidates"
+      ]
+    },
+    {
+      "key": "select",
+      "name": "Select",
+      "line": "Compare shortlisted candidates with VLM verification and select the strongest candidate.",
+      "metric": "verify",
+      "visual_title": "Candidate comparison",
+      "visual_kind": "image",
+      "image": "assets/select_comparison.jpg",
+      "caption": "The selector compares the shortlisted candidates and records rationales for why the accepted candidate beats alternatives.",
+      "stats": [
+        {
+          "label": "Best key",
+          "value": "white_table_l0_003"
+        },
+        {
+          "label": "Best score",
+          "value": 0.7086000000000001
+        },
+        {
+          "label": "Rounds",
+          "value": 1
+        },
+        {
+          "label": "Select time",
+          "value": "18.4s"
+        }
+      ],
+      "logs": [
+        "select.scores: white_table_l0_003 sel=0.71; white_table_l0_004 sel=0.71; white_table_l0_000 sel=0.71",
+        "select.reason: Visual verification of three candidates for 'white table with dark legs on the right side'. Candidate white_table_l0_000 (image_index=1) is a small round white table with dark legs, locat...",
+        "verifier.summary: Visual verification of three candidates for 'white table with dark legs on the right side'. Candidate white_table_l0_000 (image_index=1) is a small round white table with dark l..."
+      ]
+    },
+    {
+      "key": "judge",
+      "name": "Judge",
+      "line": "Return accept for white_table_l0_003.",
+      "metric": "accept",
+      "visual_title": "Accepted grounding",
+      "visual_kind": "image",
+      "image": "assets/judge_final.jpg",
+      "caption": "The loop judge accepts the selected candidate once the evidence is sufficient; otherwise the same protocol can continue with feedback.",
+      "stats": [
+        {
+          "label": "Action",
+          "value": "accept"
+        },
+        {
+          "label": "Accepted",
+          "value": "white_table_l0_003"
+        },
+        {
+          "label": "Loops",
+          "value": 1
+        },
+        {
+          "label": "Judge time",
+          "value": "12.2s"
+        }
+      ],
+      "logs": [
+        "judge.action: accept",
+        "judge.reason: Candidate white_table_l0_003 is the strongest match for 'white table with dark legs on the right side'. Visual verification confirms strong match for all query attributes (white surface, dark legs, right-side position...",
+        "final.key: white_table_l0_003"
+      ]
+    }
+  ]
+}
